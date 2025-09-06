@@ -40,20 +40,25 @@ io.on('connection', (socket) =>{
 
     //* handeling joining a room
     socket.on('join chat', (room) =>{
-            socket.join(room)
-            console.log(`User has joined to room: ${room}`)
-            socket.emit('connected')
+        socket.join(room)
+        console.log(`User has joined to room: ${room}`)
+        console.log(`Socket ${socket.id} joined room ${room}`)
+        // Don't emit 'connected' again as it's already emitted in setup
     })
 
     //* handeling sending new message
     socket.on('new message', (newMsgRecieved) =>{
         let chat = newMsgRecieved.chat
+        console.log('New message received:', newMsgRecieved)
 
         if(!chat.users) return console.log('Error no users exist!')
         
+        // Emit to the chat room (for all users in the chat)
+        socket.to(chat._id).emit('message recieved', newMsgRecieved)
+        
+        // Also emit to individual user rooms for notifications
         chat.users.forEach((user) =>{
             if(user._id == newMsgRecieved.sender._id) return;
-
             socket.in(user._id).emit('message recieved', newMsgRecieved)
         })
 
